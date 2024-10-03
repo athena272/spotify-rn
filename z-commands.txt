@@ -1,0 +1,19 @@
+npx create-expo-app base-rn --template
+
+pnpm create expo-app base-rn --template
+
+yarn create expo-app base-rn --template
+
+expo init exercicio-stylesheet
+
+choose Bare
+
+pnpm add @react-navigation/native
+
+pnpm add @react-navigation/bottom-tabs
+
+npx expo install react-native-screens react-native-safe-area-context
+
+npx expo install expo-font @expo-google-fonts/roboto
+
+npx expo install expo-splash-screen
