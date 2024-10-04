@@ -10,7 +10,23 @@ const Tab = createBottomTabNavigator<RootStackParamList>()
 
 export default function Tabs() {
     return (
-        <Tab.Navigator>
+        <Tab.Navigator screenOptions={{
+            tabBarStyle: {
+                backgroundColor: "rgba(0,0,0,0.5)",
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                shadowOpacity: 4,
+                shadowRadius: 4,
+                elevation: 4,
+                shadowOffset: {
+                    width: 0,
+                    height: -4
+                },
+                borderTopWidth: 0
+            }
+        }}>
             <Tab.Screen name='Home' component={Home}
                 options={{
                     tabBarLabel: 'Home',
@@ -18,9 +34,9 @@ export default function Tabs() {
                     tabBarLabelStyle: { color: 'white' },
                     tabBarIcon: ({ focused }) =>
                         focused ? (
-                            <Entypo name="home" size={24} color="black" />
+                            <Entypo name="home" size={24} color="white" />
                         ) :
-                            <AntDesign name="home" size={24} color="black" />
+                            <AntDesign name="home" size={24} color="white" />
                 }}
             />
             <Tab.Screen name='Profile' component={Profile}
@@ -30,9 +46,9 @@ export default function Tabs() {
                     tabBarLabelStyle: { color: 'white' },
                     tabBarIcon: ({ focused }) =>
                         focused ? (
-                            <Ionicons name="person" size={24} color="black" />
+                            <Ionicons name="person" size={24} color="white" />
                         ) :
-                            <Ionicons name="person-outline" size={24} color="black" />
+                            <Ionicons name="person-outline" size={24} color="white" />
                 }}
             />
         </Tab.Navigator>
