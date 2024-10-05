@@ -1,16 +1,19 @@
-import React, { useEffect } from 'react'
-import { StyleSheet, Text, SafeAreaView, View, Pressable } from 'react-native'
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, SafeAreaView, View, Pressable } from 'react-native';
 import { LinearGradient } from "expo-linear-gradient";
-import { Entypo } from "@expo/vector-icons";
-import { MaterialIcons } from "@expo/vector-icons";
-import { AntDesign } from '@expo/vector-icons';
-import * as AppAuth from "expo-app-auth";
+import { Entypo, MaterialIcons, AntDesign } from "@expo/vector-icons";
+import * as AuthSession from 'expo-auth-session';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../@types";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+
+const clientId = "6a79ebe921944e5cb0bf98dc550ef936";
+const redirectUri = AuthSession.makeRedirectUri({
+    native: "your.app://redirect", // Substitua por seu esquema de URI
+});
 
 export default function Login() {
     const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -25,23 +28,26 @@ export default function Login() {
             if (accessToken && expirationDate) {
                 const currentTime = Date.now();
                 if (currentTime < parseInt(expirationDate)) {
-                    // here the token is still valid
+                    // Token ainda é válido
                     navigation.replace("Tabs");
                 } else {
-                    // token would be expired so we need to remove it from the async storage
-                    AsyncStorage.removeItem("token");
-                    AsyncStorage.removeItem("expirationDate");
+                    // Token expirado, removendo do armazenamento assíncrono
+                    await AsyncStorage.removeItem("token");
+                    await AsyncStorage.removeItem("expirationDate");
                 }
             }
-        }
+        };
 
         checkTokenValidity();
-    }, [])
+    }, []);
 
     async function handleAuthentication() {
-        const config = {
-            issuer: "https://accounts.spotify.com",
-            clientId: "6a79ebe921944e5cb0bf98dc550ef936",
+        const redirectUri = AuthSession.makeRedirectUri({
+            native: "your.app://redirect", // Substitua por seu esquema de URI
+        });
+
+        const authRequest = await AuthSession.loadAsync({
+            clientId,
             scopes: [
                 "user-read-email",
                 "user-library-read",
@@ -49,18 +55,18 @@ export default function Login() {
                 "user-top-read",
                 "playlist-read-private",
                 "playlist-read-collaborative",
-                "playlist-modify-public" // or "playlist-modify-private"
+                "playlist-modify-public",
             ],
-            redirectUrl: "exp://26.158.76.190:8081"
-        }
+            redirectUri,
+        });
 
-        const result = await AppAuth.authAsync(config);
-        console.log("🚀 ~ handleAuthentication ~ result:", result)
-        if (result.accessToken && result.accessTokenExpirationDate) {
-            const expirationDate = new Date(result.accessTokenExpirationDate).getTime();
-            AsyncStorage.setItem("token", result.accessToken);
-            AsyncStorage.setItem("expirationDate", expirationDate.toString());
-            navigation.navigate("Tabs")
+        const result = await authRequest.authorizeAsync({ useProxy: true });
+
+        if (result.type === "success" && result.params.access_token) {
+            const expirationTime = Date.now() + parseInt(result.params.expires_in) * 1000;
+            await AsyncStorage.setItem("token", result.params.access_token);
+            await AsyncStorage.setItem("expirationDate", expirationTime.toString());
+            navigation.navigate("Tabs");
         }
     }
 
@@ -68,41 +74,31 @@ export default function Login() {
         <LinearGradient colors={["#040306", '#000']} style={{ flex: 1, height: '100%' }}>
             <SafeAreaView>
                 <View style={{ height: 80 }} />
-                <Entypo
-                    style={styles.iconSpotify}
-                    name="spotify"
-                    size={80}
-                    color="white"
-                />
-                <Text style={styles.milionsSongs}                >
-                    Millions of Songs Free on spotify!
-                </Text>
+                <Entypo style={styles.iconSpotify} name="spotify" size={80} color="white" />
+                <Text style={styles.milionsSongs}>Millions of Songs Free on Spotify!</Text>
                 <View style={{ height: 80 }} />
-                {/* Sign with spotify */}
-                <Pressable
-                    style={styles.signSpotify}
-                    onPress={handleAuthentication}
-                >
-                    <Text style={{ fontWeight: '900' }}>Sign In with spotify</Text>
+                {/* Sign in with Spotify */}
+                <Pressable style={styles.signSpotify} onPress={handleAuthentication}>
+                    <Text style={{ fontWeight: '900' }}>Sign In with Spotify</Text>
                 </Pressable>
-                {/* Sign with phone number */}
+                {/* Sign in with phone number */}
                 <Pressable style={styles.signInBtn}>
                     <MaterialIcons name="phone-android" size={24} color="white" />
                     <Text style={styles.txtSignInBtn}>Continue with phone number</Text>
                 </Pressable>
-                {/* Sign with google account */}
+                {/* Sign in with Google account */}
                 <Pressable style={styles.signInBtn}>
                     <AntDesign name="google" size={24} color="#DB4437" />
                     <Text style={styles.txtSignInBtn}>Sign in with Google</Text>
                 </Pressable>
-                {/* Sign with facebook */}
+                {/* Sign in with Facebook */}
                 <Pressable style={styles.signInBtn}>
                     <Entypo name="facebook" size={24} color="#4267B2" />
-                    <Text style={styles.txtSignInBtn}>Sign In with facebook</Text>
+                    <Text style={styles.txtSignInBtn}>Sign In with Facebook</Text>
                 </Pressable>
             </SafeAreaView>
         </LinearGradient>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -124,7 +120,7 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         alignItems: "center",
         justifyContent: "center",
-        marginVertical: 10
+        marginVertical: 10,
     },
     signInBtn: {
         backgroundColor: "#131624",
@@ -137,12 +133,12 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         marginVertical: 10,
         borderColor: "#C0C0C0",
-        borderWidth: 0.8
+        borderWidth: 0.8,
     },
     txtSignInBtn: {
         fontWeight: "800",
         color: "white",
         textAlign: "center",
-        flex: 1
+        flex: 1,
     },
-})
+});
